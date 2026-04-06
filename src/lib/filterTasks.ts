@@ -6,8 +6,12 @@ export function filterTasksByView(tasks: Task[], view: AppView): Task[] {
   const end = weekEndISO(today)
 
   switch (view) {
+    case 'home':
+      /** Landing only; tasks are shown on Dashboard and other views. */
+      return []
     case 'dashboard':
-      return tasks.filter((t) => !t.completed && !!t.date && t.date <= today)
+      /** Full hub: every task you have created (all dates, inbox, done). Time views stay separate. */
+      return tasks
     case 'today':
       return tasks.filter((t) => !t.completed && t.date === today)
     case 'tomorrow': {

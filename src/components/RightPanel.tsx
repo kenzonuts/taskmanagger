@@ -1,4 +1,7 @@
 import { useMemo } from 'react'
+import { categoryLabel } from '../lib/categories'
+import { tagLabel } from '../lib/taskTaxonomy'
+import { useCategories } from '../state/CategoryContext'
 import type { Task } from '../types/task'
 import { useTasks } from '../state/TaskContext'
 import { IconChevronDown, IconMoon, IconSun } from './icons'
@@ -17,6 +20,7 @@ export function RightPanel({
   checklistTasks,
 }: RightPanelProps) {
   const { dispatch } = useTasks()
+  const { categories } = useCategories()
 
   const checklist = useMemo(() => checklistTasks.slice(0, 6), [checklistTasks])
 
@@ -56,11 +60,20 @@ export function RightPanel({
               finished enough to park.
             </p>
             <div className="right-active-meta">
-              <span className="right-pill">
-                <span className="right-pill-icon" aria-hidden />
-                Focus list
-              </span>
-              <span className="right-tag-chip">today</span>
+              {activeTask.category ? (
+                <span className="right-pill">
+                  <span className="right-pill-icon" aria-hidden />
+                  {categoryLabel(activeTask.category, categories)}
+                </span>
+              ) : (
+                <span className="right-pill right-pill--muted">
+                  <span className="right-pill-icon" aria-hidden />
+                  No list
+                </span>
+              )}
+              {activeTask.tag ? (
+                <span className="right-tag-chip">{tagLabel(activeTask.tag)}</span>
+              ) : null}
             </div>
           </>
         ) : (

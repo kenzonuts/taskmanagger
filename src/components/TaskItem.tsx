@@ -9,6 +9,8 @@ import {
 } from 'react'
 import { todayISO } from '../lib/dates'
 import { useMotionSafe } from '../lib/useMotionSafe'
+import { TASK_TAGS } from '../lib/taskTaxonomy'
+import { useCategories } from '../state/CategoryContext'
 import type { Task } from '../types/task'
 import { useTasks } from '../state/TaskContext'
 import { IconClock, IconStar, IconTrash } from './icons'
@@ -20,6 +22,7 @@ type TaskItemProps = {
 
 export function TaskItem({ task, variant = 'default' }: TaskItemProps) {
   const { dispatch } = useTasks()
+  const { categories } = useCategories()
   const reduceMotion = useMotionSafe()
   const timeFieldId = useId()
   const [editing, setEditing] = useState(false)
@@ -128,6 +131,53 @@ export function TaskItem({ task, variant = 'default' }: TaskItemProps) {
           <button type="button" className="task-title-btn" onClick={startEdit}>
             {task.title}
           </button>
+        )}
+
+        {!task.completed && (
+          <div
+            className="task-taxonomy-row"
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+          >
+            <span className="task-taxonomy-label">List</span>
+            <div className="task-taxonomy-chips">
+              {categories.map((l) => (
+                <button
+                  key={l.id}
+                  type="button"
+                  className={`task-chip${task.category === l.id ? ' is-on' : ''}`}
+                  onClick={() =>
+                    dispatch({
+                      type: 'SET_CATEGORY',
+                      id: task.id,
+                      category: task.category === l.id ? '' : l.id,
+                    })
+                  }
+                >
+                  {l.label}
+                </button>
+              ))}
+            </div>
+            <span className="task-taxonomy-label">Tags</span>
+            <div className="task-taxonomy-chips">
+              {TASK_TAGS.map((tg) => (
+                <button
+                  key={tg.id}
+                  type="button"
+                  className={`task-chip${task.tag === tg.id ? ' is-on' : ''}`}
+                  onClick={() =>
+                    dispatch({
+                      type: 'SET_TAG',
+                      id: task.id,
+                      tag: task.tag === tg.id ? '' : tg.id,
+                    })
+                  }
+                >
+                  {tg.label}
+                </button>
+              ))}
+            </div>
+          </div>
         )}
 
         {!task.date && !task.completed && (

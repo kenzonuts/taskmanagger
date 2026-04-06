@@ -31,7 +31,14 @@ export function KanbanBoard({
 
   return (
     <section className="kanban-section" aria-label="Task board">
-      <h2 className="block-heading">To Do list</h2>
+      <div className="kanban-section-head">
+        <h2 className="block-heading kanban-heading">Board</h2>
+        <p className="kanban-hint">
+          <strong>To Do</strong> holds open work. Tap the star on a card to move it to{' '}
+          <strong>In progress</strong> (max five). <strong>Completed</strong> gathers finished
+          items. Click a card to show it in the right panel.
+        </p>
+      </div>
       {allEmpty ? (
         <p className="kanban-empty">{emptyLabel}</p>
       ) : (

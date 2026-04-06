@@ -21,16 +21,20 @@ export function HabitsRow({ focusTasks }: HabitsRowProps) {
     return {
       key: t.id,
       title: t.title,
-      range: t.time ? `${t.time} · focus` : 'Any time · focus',
+      range: t.time ? `${t.time} · starred` : 'Any time · starred',
       cls: d.cls,
     }
   })
 
   return (
-    <section className="habits-section" aria-labelledby="habits-heading">
-      <h2 id="habits-heading" className="block-heading">
-        Your habits
+    <section className="habits-section" aria-labelledby="focus-strip-heading">
+      <h2 id="focus-strip-heading" className="block-heading">
+        Focus strip
       </h2>
+      <p className="block-sub">
+        These cards mirror your <strong>In progress</strong> column—tasks you have starred (up to five).
+        Star a task on the board to pin it here.
+      </p>
       <div className="habits-scroll">
         {merged.map((h) => (
           <article key={h.key} className={`habit-card ${h.cls}`}>

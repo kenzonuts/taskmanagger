@@ -23,11 +23,16 @@ function longDateFromISO(iso: string): string {
 
 export function viewMeta(view: AppView): { title: string; subtitle: string } {
   switch (view) {
+    case 'home':
+      return {
+        title: 'Home',
+        subtitle: 'Your day at a glance—jump into planning when you are ready.',
+      }
     case 'dashboard':
       return {
         title: 'Dashboard',
         subtitle:
-          'Stay present—capture tasks fast, work what matters, reschedule the rest.',
+          'Everything in one board—add here, then give tasks a date or list when you are ready.',
       }
     case 'today':
       return {

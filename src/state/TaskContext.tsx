@@ -9,6 +9,7 @@ import {
   useState,
   type ReactNode,
 } from 'react'
+import { parseTaskRecord } from '../lib/parseTask'
 import type { Task, TaskAction } from '../types/task'
 import { MAX_FOCUS, taskReducer } from './taskReducer'
 
@@ -19,24 +20,15 @@ function parseStored(raw: string | null): Task[] {
   try {
     const data = JSON.parse(raw) as unknown
     if (!Array.isArray(data)) return []
-    return data.filter(isTask)
+    const out: Task[] = []
+    for (const item of data) {
+      const t = parseTaskRecord(item)
+      if (t) out.push(t)
+    }
+    return out
   } catch {
     return []
   }
-}
-
-function isTask(v: unknown): v is Task {
-  if (!v || typeof v !== 'object') return false
-  const t = v as Record<string, unknown>
-  return (
-    typeof t.id === 'string' &&
-    typeof t.title === 'string' &&
-    typeof t.completed === 'boolean' &&
-    typeof t.isFocus === 'boolean' &&
-    typeof t.date === 'string' &&
-    (t.time === null || typeof t.time === 'string') &&
-    typeof t.createdAt === 'number'
-  )
 }
 
 type TaskContextValue = {

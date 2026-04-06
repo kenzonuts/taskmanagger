@@ -1,12 +1,13 @@
 import type { AppView } from '../types/task'
 import {
-  IconBell,
   IconCalendarRange,
+  IconCalendarTomorrow,
   IconGrid,
   IconHome,
+  IconInbox,
   IconLogOut,
   IconSettings,
-  IconUsers,
+  IconSun,
 } from './icons'
 
 type RailProps = {
@@ -16,11 +17,12 @@ type RailProps = {
 }
 
 const RAIL: { target: AppView; label: string; icon: typeof IconHome }[] = [
-  { target: 'dashboard', label: 'Home', icon: IconHome },
-  { target: 'today', label: 'Dashboard', icon: IconGrid },
-  { target: 'week', label: 'Calendar', icon: IconCalendarRange },
-  { target: 'inbox', label: 'People', icon: IconUsers },
-  { target: 'tomorrow', label: 'Reminders', icon: IconBell },
+  { target: 'home', label: 'Home', icon: IconHome },
+  { target: 'dashboard', label: 'Dashboard', icon: IconGrid },
+  { target: 'today', label: 'Today', icon: IconSun },
+  { target: 'week', label: 'Week', icon: IconCalendarRange },
+  { target: 'inbox', label: 'Inbox', icon: IconInbox },
+  { target: 'tomorrow', label: 'Tomorrow', icon: IconCalendarTomorrow },
 ]
 
 export function AppRail({

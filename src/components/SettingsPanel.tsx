@@ -1,7 +1,23 @@
 import { useRef, type ChangeEventHandler } from 'react'
-import type { Task } from '../types/task'
+import { parseCategoryRecord } from '../lib/categories'
+import { parseTaskRecord } from '../lib/parseTask'
+import { useCategories } from '../state/CategoryContext'
 import { useTasks } from '../state/TaskContext'
+import type { UserCategory } from '../types/category'
+import type { Task } from '../types/task'
 import { IconLayout } from './icons'
+
+type BackupV2 = {
+  version: 2
+  tasks: unknown[]
+  categories?: unknown[]
+}
+
+function isBackupV2(v: unknown): v is BackupV2 {
+  if (!v || typeof v !== 'object') return false
+  const o = v as Record<string, unknown>
+  return o.version === 2 && Array.isArray(o.tasks)
+}
 
 type SettingsPanelProps = {
   open: boolean
@@ -10,18 +26,25 @@ type SettingsPanelProps = {
 
 export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
   const { tasks, dispatch } = useTasks()
+  const {
+    categories,
+    dispatchCategory,
+    updateCategoryLabel,
+    deleteCategory,
+  } = useCategories()
   const importRef = useRef<HTMLInputElement>(null)
 
   if (!open) return null
 
   const exportJson = () => {
-    const blob = new Blob([JSON.stringify(tasks, null, 2)], {
+    const payload: BackupV2 = { version: 2, tasks, categories }
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {
       type: 'application/json',
     })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `smart-daily-planner-backup-${Date.now()}.json`
+    a.download = `dayflow-backup-${Date.now()}.json`
     a.click()
     URL.revokeObjectURL(url)
   }
@@ -32,10 +55,33 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
     const reader = new FileReader()
     reader.onload = () => {
       try {
-        const data = JSON.parse(String(reader.result)) as unknown
-        if (!Array.isArray(data)) return
-        const next = data.filter(isTask)
-        dispatch({ type: 'HYDRATE', tasks: next })
+        const raw = JSON.parse(String(reader.result)) as unknown
+        if (Array.isArray(raw)) {
+          const next: Task[] = []
+          for (const item of raw) {
+            const t = parseTaskRecord(item)
+            if (t) next.push(t)
+          }
+          dispatch({ type: 'HYDRATE', tasks: next })
+        } else if (isBackupV2(raw)) {
+          const nextTasks: Task[] = []
+          for (const item of raw.tasks) {
+            const t = parseTaskRecord(item)
+            if (t) nextTasks.push(t)
+          }
+          dispatch({ type: 'HYDRATE', tasks: nextTasks })
+          if (Array.isArray(raw.categories)) {
+            const nextCats: UserCategory[] = []
+            for (const item of raw.categories) {
+              const c = parseCategoryRecord(item)
+              if (c) nextCats.push(c)
+            }
+            dispatchCategory({
+              type: 'HYDRATE',
+              categories: nextCats.length > 0 ? nextCats : [],
+            })
+          }
+        }
       } catch {
         /* ignore */
       }
@@ -55,14 +101,24 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
     }
   }
 
+  const onRemoveList = (c: UserCategory) => {
+    if (
+      window.confirm(
+        `Remove list "${c.label}"? Tasks stay on your board but lose this list label.`,
+      )
+    ) {
+      deleteCategory(c.id)
+    }
+  }
+
   return (
     <div className="settings-backdrop" role="presentation" onClick={onClose}>
       <div
-        className="settings-panel"
+        className="settings-panel settings-panel--wide"
         role="dialog"
         aria-modal="true"
         aria-label="Settings"
-        onClick={(e) => e.stopPropagation()}
+        onClick={(eve) => eve.stopPropagation()}
       >
         <div className="settings-panel-head">
           <div className="settings-brand">
@@ -76,6 +132,43 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
             Close
           </button>
         </div>
+
+        <div className="settings-lists-block">
+          <h3 className="settings-lists-title">Your lists</h3>
+          <p className="settings-lists-desc">
+            Rename lists or remove them. Removing a list does not delete tasks.
+          </p>
+          <ul className="settings-lists-ul">
+            {categories.map((c) => (
+              <li key={c.id} className="settings-list-row">
+                <span
+                  className="settings-list-dot"
+                  style={{ background: c.color }}
+                  aria-hidden
+                />
+                <input
+                  key={`${c.id}-${c.label}`}
+                  className="settings-list-input"
+                  aria-label={`Rename ${c.label}`}
+                  defaultValue={c.label}
+                  onBlur={(eve) => {
+                    const next = eve.target.value.trim()
+                    if (next && next !== c.label) updateCategoryLabel(c.id, next)
+                  }}
+                  maxLength={48}
+                />
+                <button
+                  type="button"
+                  className="settings-list-remove"
+                  onClick={() => onRemoveList(c)}
+                >
+                  Remove
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+
         <div className="settings-actions">
           <button type="button" className="settings-btn" onClick={exportJson}>
             Export backup
@@ -94,6 +187,10 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
             className="sr-only"
             onChange={onImport}
           />
+          <p className="settings-import-hint">
+            New backups include tasks and lists. Older files that are only a task array still
+            import.
+          </p>
           <button
             type="button"
             className="settings-btn settings-btn-danger"
@@ -104,19 +201,5 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps) {
         </div>
       </div>
     </div>
-  )
-}
-
-function isTask(v: unknown): v is Task {
-  if (!v || typeof v !== 'object') return false
-  const t = v as Record<string, unknown>
-  return (
-    typeof t.id === 'string' &&
-    typeof t.title === 'string' &&
-    typeof t.completed === 'boolean' &&
-    typeof t.isFocus === 'boolean' &&
-    typeof t.date === 'string' &&
-    (t.time === null || typeof t.time === 'string') &&
-    typeof t.createdAt === 'number'
   )
 }

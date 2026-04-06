@@ -1,28 +1,60 @@
 import { addDaysISO, todayISO } from '../lib/dates'
 import { createId } from '../lib/id'
+import { sanitizeTagId } from '../lib/taskTaxonomy'
 import type { Task, TaskAction } from '../types/task'
+
+function normalizeTaskCategory(v: unknown): string {
+  return typeof v === 'string' ? v.trim() : ''
+}
 
 const MAX_FOCUS = 5
 
 export function taskReducer(state: Task[], action: TaskAction): Task[] {
   switch (action.type) {
     case 'HYDRATE':
-      return action.tasks
+      return action.tasks.map((t) => ({
+        ...t,
+        category: normalizeTaskCategory(t.category),
+        tag: sanitizeTagId(typeof t.tag === 'string' ? t.tag : ''),
+      }))
     case 'CLEAR_ALL':
       return []
     case 'ADD_TASK': {
       const title = action.title.trim()
       if (!title) return state
+      const rawTime =
+        typeof action.time === 'string' ? action.time.trim() : ''
+      const time = rawTime ? rawTime : null
       const task: Task = {
         id: createId(),
         title,
         completed: false,
         isFocus: false,
         date: action.date,
-        time: null,
+        time,
+        category: normalizeTaskCategory(action.category),
+        tag: sanitizeTagId(action.tag),
         createdAt: Date.now(),
       }
       return [task, ...state]
+    }
+    case 'SET_CATEGORY': {
+      const cat = normalizeTaskCategory(action.category)
+      return state.map((t) =>
+        t.id === action.id ? { ...t, category: cat } : t,
+      )
+    }
+    case 'STRIP_CATEGORY_FROM_TASKS': {
+      const id = action.categoryId
+      return state.map((t) =>
+        t.category === id ? { ...t, category: '' } : t,
+      )
+    }
+    case 'SET_TAG': {
+      const tag = sanitizeTagId(action.tag)
+      return state.map((t) =>
+        t.id === action.id ? { ...t, tag } : t,
+      )
     }
     case 'UPDATE_TITLE': {
       const title = action.title.trim()
