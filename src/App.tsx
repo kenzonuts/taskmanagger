@@ -21,9 +21,9 @@ function PlannerShell() {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [theme, setTheme] = useState<'light' | 'dark'>(() =>
     typeof document !== 'undefined' &&
-    document.documentElement.getAttribute('data-theme') === 'dark'
-      ? 'dark'
-      : 'light',
+    document.documentElement.getAttribute('data-theme') === 'light'
+      ? 'light'
+      : 'dark',
   )
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null)

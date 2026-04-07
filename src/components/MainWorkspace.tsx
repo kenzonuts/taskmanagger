@@ -78,9 +78,10 @@ export function MainWorkspace({
   const q = query.trim()
   /** Today = execution-only; capture stays on Dashboard, Inbox, etc. */
   const showAddTask = view !== 'today'
+  const isDashboard = view === 'dashboard'
 
   return (
-    <div className="main-panel">
+    <div className={`main-panel${isDashboard ? ' main-panel--dashboard' : ''}`}>
       <div className="main-search-row">
         <div className="main-search">
           <IconSearch size={20} strokeWidth={1.65} className="main-search-icon" />
@@ -142,10 +143,32 @@ export function MainWorkspace({
         </div>
       )}
 
-      <header className="main-hero">
-        <div>
+      <header className={`main-hero${isDashboard ? ' main-hero--dashboard' : ''}`}>
+        <div className="main-hero-copy">
+          {isDashboard ? (
+            <p className="main-hero-eyebrow">Command center</p>
+          ) : null}
           <h1 className="main-hero-title">{heroTitle}</h1>
           <p className="main-hero-sub">{meta.subtitle}</p>
+          {isDashboard ? (
+            <ul className="dash-stat-strip" aria-label="Task counts on this board">
+              <li className="dash-stat-pill dash-stat-pill--todo">
+                <span className="dash-stat-pill-dot" aria-hidden />
+                <span className="dash-stat-pill-label">To do</span>
+                <span className="dash-stat-pill-n">{todo.length}</span>
+              </li>
+              <li className="dash-stat-pill dash-stat-pill--doing">
+                <span className="dash-stat-pill-dot dash-stat-pill-dot--warm" aria-hidden />
+                <span className="dash-stat-pill-label">In progress</span>
+                <span className="dash-stat-pill-n">{inProgress.length}</span>
+              </li>
+              <li className="dash-stat-pill dash-stat-pill--done">
+                <span className="dash-stat-pill-dot dash-stat-pill-dot--green" aria-hidden />
+                <span className="dash-stat-pill-label">Done</span>
+                <span className="dash-stat-pill-n">{done.length}</span>
+              </li>
+            </ul>
+          ) : null}
         </div>
         {showAddTask ? (
           <button type="button" className="btn-new-activity" onClick={focusQuickAdd}>
